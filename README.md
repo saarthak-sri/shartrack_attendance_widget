@@ -1,97 +1,63 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Attendance Tracker Mobile App
 
-# Getting Started
+A React Native application for tracking student attendance from the Sharda University portal. This app is built on the same logic as the original Python script found in the `attendance tracker` folder.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Features
 
-## Step 1: Start Metro
+- **OTP Login**: Secure login using System ID and OTP sent to the student's registered mobile number.
+- **Attendance Fetching**: Automatically fetches attendance data from the Sharda University student portal.
+- **Data Parsing**: Parses HTML table data into a clean, structured format.
+- **Visual Analytics**: Displays subject-wise attendance in a bar chart for easy visualization.
+- **Overall Attendance**: Calculates and displays the overall attendance percentage.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## Key Components
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **[App.tsx](file:///c:/shartr/mobile/App.tsx)**: The main application file containing the login flow, attendance fetching, and UI rendering.
+- **Attendance Logic**: Follows the same scraping and parsing logic as the original [Python backend](file:///c:/shartr/attendance%20tracker/roott/backend/main.py).
 
-```sh
-# Using npm
-npm start
+## Tech Stack
 
-# OR using Yarn
-yarn start
-```
+- **Frontend**: React Native
+- **Networking**: Axios
+- **Parsing**: react-native-html-parser
+- **Charts**: react-native-chart-kit
+- **Styling**: React Native StyleSheet
 
-## Step 2: Build and run your app
+## Getting Started
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### Prerequisites
 
-### Android
+- [Node.js](https://nodejs.org/) (>= 22.11.0)
+- [React Native CLI](https://reactnative.dev/docs/environment-setup)
+- Android Studio / Xcode for mobile development
 
-```sh
-# Using npm
-npm run android
+### Installation
 
-# OR using Yarn
-yarn android
-```
+1.  Navigate to the `mobile` directory:
+    ```bash
+    cd mobile
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
 
-### iOS
+### Running the App
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+1.  Start the Metro bundler:
+    ```bash
+    npm start
+    ```
+2.  Run on Android:
+    ```bash
+    npm run android
+    ```
+3.  Run on iOS:
+    ```bash
+    npm run ios
+    ```
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## Development
 
-```sh
-bundle install
-```
+The app uses a `DOMParser` to extract attendance information from the student portal's HTML response. The logic can be found in the `parseAttendance` function within `App.tsx`.
 
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
