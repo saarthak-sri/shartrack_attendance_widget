@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import {BarChart} from 'react-native-chart-kit'
 import axios from 'axios';
 import { DOMParser } from 'react-native-html-parser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BASE = 'https://student.sharda.ac.in';
 
@@ -23,6 +24,107 @@ export default function App() {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [storedSession, setStoredSession] = useState<string | null>(null);
+
+  const extractAndStoreCookie = async (res: any, currentSystemId?: string) => {
+    try {
+      const headers = res.headers;
+      if (!headers) return null;
+      const setCookie = headers['set-cookie'] || headers['Set-Cookie'];
+      if (!setCookie) return null;
+
+      const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+      for (const cookie of cookies) {
+        const match = cookie.match(/ci_session=([^;]+)/);
+        if (match) {
+          const value = match[1];
+          setStoredSession(value);
+          await AsyncStorage.setItem('ci_session', value);
+          const sysId = currentSystemId || systemId;
+          if (sysId) {
+            await AsyncStorage.setItem('system_id', sysId);
+          }
+          return value;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to extract and store cookie', e);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        setLoading(true);
+        const savedSession = await AsyncStorage.getItem('ci_session');
+        const savedSystemId = await AsyncStorage.getItem('system_id');
+        
+        if (savedSystemId) {
+          setSystemId(savedSystemId);
+        }
+
+        if (savedSession) {
+          setStoredSession(savedSession);
+          const success = await fetchAttendance(savedSession);
+          if (success) {
+            setMessage('Session restored successfully');
+            return;
+          }
+        }
+        setStep('login');
+      } catch (e) {
+        console.error('Failed to restore session', e);
+        setStep('login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  useEffect(() => {
+    if (step !== 'attendance') return;
+
+    const performScheduledFetch = async () => {
+      try {
+        const res = await axios.get(`${BASE}/admin/courses`, {
+          withCredentials: true,
+        });
+
+        await extractAndStoreCookie(res);
+
+        const parsed = parseAttendance(res.data);
+        if (parsed && parsed.length > 0) {
+          setAttendance(parsed);
+          setMessage('Attendance updated automatically');
+          return;
+        }
+      } catch {
+        // Ignore native fetch error and try manual restore next
+      }
+
+      if (storedSession) {
+        setMessage('Restoring session...');
+        const success = await fetchAttendance(storedSession);
+        if (success) {
+          setMessage('Attendance updated automatically (restored session)');
+        } else {
+          setMessage('Session expired. Please log in again.');
+          setStep('login');
+          await AsyncStorage.removeItem('ci_session');
+        }
+      } else {
+        setMessage('Session expired. Please log in again.');
+        setStep('login');
+      }
+    };
+
+    const intervalId = setInterval(performScheduledFetch, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [step, storedSession]);
 
   const sendOtp = async () => {
     try {
@@ -52,36 +154,56 @@ export default function App() {
   const verifyOtp = async () => {
     try {
       setLoading(true);
+      setMessage('');
 
       const form = new URLSearchParams();
       form.append('system_id', systemId);
       form.append('otp', otp);
 
-      await axios.post(`${BASE}/admin`, form.toString(), {
+      const res = await axios.post(`${BASE}/admin`, form.toString(), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         withCredentials: true,
       });
 
-      fetchAttendance();
+      const session = await extractAndStoreCookie(res);
+      const success = await fetchAttendance(session || undefined);
+      if (!success) {
+        setMessage('Failed to load courses. Please try again.');
+      }
     } catch {
       setMessage('Invalid OTP');
       setLoading(false);
     }
   };
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = async (sessionToUse?: string) => {
     try {
+      setLoading(true);
+      const activeSession = sessionToUse || storedSession;
+      const headers: any = {};
+      if (activeSession) {
+        headers['Cookie'] = `ci_session=${activeSession}`;
+      }
+
       const res = await axios.get(`${BASE}/admin/courses`, {
+        headers,
         withCredentials: true,
       });
 
+      await extractAndStoreCookie(res);
+
       const parsed = parseAttendance(res.data);
-      setAttendance(parsed);
-      setStep('attendance');
+      if (parsed && parsed.length > 0) {
+        setAttendance(parsed);
+        setStep('attendance');
+        return true;
+      } else {
+        return false;
+      }
     } catch {
-      setMessage('Failed to fetch attendance');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -193,6 +315,7 @@ const getOverallPercentage = () => {
             }}
             width={Dimensions.get('window').width - 30}
             height={220}
+            yAxisLabel=""
             yAxisSuffix="%"
             chartConfig={{
               backgroundColor: '#ffffff',
